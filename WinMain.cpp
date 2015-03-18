@@ -9,10 +9,6 @@
 
 LRESULT CALLBACK    WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 HCURSOR             LoadAnimatedCursor(HINSTANCE hInstance, UINT nID, LPCTSTR pszResouceType);
-void                MakeRandomPolygon(HDC hdc, int x, int y, int maxSize);
-void                MakeTriangle(HDC hdc, int x, int y, int maxSize);
-void                MakeHexagon(HDC hdc, int x, int y, int maxSize);
-void                MakeStar(HDC hdc, int x, int y, int maxSize);
 void                NewFile(HWND hWnd);
 void                OpenFile(HWND hWnd);
 void                SaveFile(HWND hWnd);
@@ -114,7 +110,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         DrawManager::getInstance()->StartRecord();
         TextOut(hdc, 0, 1, buf1, wcslen(buf1));
         TextOut(hdc, 0, 17, buf2, wcslen(buf2));
-        if (click) MakeRandomPolygon(hdc, x, y, 100);
+        if (click)
+        {
+            DrawManager::getInstance()->MakeRandomPolygon(x, y, 100);
+        }
         DrawManager::getInstance()->CloseRecord();
 
         DrawManager::getInstance()->InitScreen(hWnd);
@@ -145,7 +144,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         int y = HIWORD(lParam);
 
         DrawManager::getInstance()->StartRecord();
-        MakeRandomPolygon(hdc, x, y, 150);
+        DrawManager::getInstance()->MakeRandomPolygon(x, y, 150);
         DrawManager::getInstance()->CloseRecord();
 
         DrawManager::getInstance()->InitScreen(hWnd);
@@ -225,90 +224,6 @@ HCURSOR LoadAnimatedCursor(HINSTANCE hInstance, UINT nID, LPCTSTR pszResouceType
         }
     }
     return hCursor;
-}
-
-void MakeRandomPolygon(HDC hdc, int x, int y, int maxSize)
-{
-    COLORREF color = RGB(rand() % 255, rand() % 255, rand() % 255);
-    HBRUSH myBrush;
-
-    if (rand() % 2 == 0)
-        myBrush = CreateSolidBrush(color);
-    else
-        myBrush = CreateHatchBrush(rand() % 6, color);
-
-    SelectObject(hdc, myBrush);
-
-    switch (rand() % 5)
-    {
-    case 0:
-        Rectangle(hdc, x - rand() % maxSize / 2, y - rand() % maxSize / 2, x + rand() % maxSize / 2, y + rand() % maxSize / 2);
-        break;
-    case 1:
-        Ellipse(hdc, x - rand() % maxSize / 2, y - rand() % maxSize / 2, x + rand() % maxSize / 2, y + rand() % maxSize / 2);
-        break;
-    case 2:
-        MakeStar(hdc, x, y, maxSize / 2);
-        break;
-    case 3:
-        MakeTriangle(hdc, x, y, maxSize / 3);
-        break;
-    case 4:
-        MakeHexagon(hdc, x, y, maxSize / 3);
-        break;
-    case 5:
-    case 6:
-    {
-        POINT vertexArray[12] = { NULL, };
-        int vertexNum = rand() % 12 + 1;
-
-        for (int i = 0; i < vertexNum; ++i)
-        {
-            vertexArray[i] = { x + rand() % maxSize - maxSize / 2, y + rand() % maxSize - maxSize / 2 };
-        }
-        Polygon(hdc, vertexArray, vertexNum);
-    }
-        break;
-    };
-    DeleteObject(myBrush);
-}
-
-void MakeTriangle(HDC hdc, int x, int y, int maxSize)
-{
-    POINT vertexArray[3] = { NULL, };
-
-    vertexArray[0] = { x, y - maxSize };
-    vertexArray[1] = { x - maxSize, y + maxSize };
-    vertexArray[2] = { x + maxSize, y + maxSize };
-
-    Polygon(hdc, vertexArray, 3);
-}
-
-void MakeHexagon(HDC hdc, int x, int y, int maxSize)
-{
-    POINT vertexArray[6] = { NULL, };
-
-    vertexArray[0] = { x, y - maxSize };
-    vertexArray[1] = { x - maxSize * 5 / 6, y - maxSize / 2 };
-    vertexArray[2] = { x - maxSize * 5 / 6, y + maxSize / 2 };
-    vertexArray[3] = { x, y + maxSize };
-    vertexArray[4] = { x + maxSize * 5 / 6, y + maxSize / 2 };
-    vertexArray[5] = { x + maxSize * 5 / 6, y - maxSize / 2 };
-
-    Polygon(hdc, vertexArray, 6);
-}
-
-void MakeStar(HDC hdc, int x, int y, int maxSize)
-{
-    POINT vertexArray[5] = { NULL, };
-
-    vertexArray[0] = { x, y - maxSize };
-    vertexArray[1] = { x - maxSize * 2 / 3, y + maxSize };
-    vertexArray[2] = { x + maxSize, y - maxSize / 3 };
-    vertexArray[3] = { x - maxSize, y - maxSize / 3 };
-    vertexArray[4] = { x + maxSize * 2 / 3, y + maxSize };
-
-    Polygon(hdc, vertexArray, 5);
 }
 
 void NewFile(HWND hWnd)

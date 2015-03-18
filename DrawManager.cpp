@@ -158,3 +158,89 @@ void DrawManager::SaveBMPFile(LPCWSTR fileName)
     free(pih);
     return;
 }
+
+
+void DrawManager::MakeRandomPolygon(int x, int y, int maxSize)
+{
+    COLORREF color = RGB(rand() % 255, rand() % 255, rand() % 255);
+    HBRUSH myBrush;
+
+    if (rand() % 2 == 0)
+        myBrush = CreateSolidBrush(color);
+    else
+        myBrush = CreateHatchBrush(rand() % 6, color);
+
+    SelectObject(m_MemoryDC, myBrush);
+
+    switch (rand() % 5)
+    {
+    case 0:
+        Rectangle(m_MemoryDC, x - rand() % maxSize / 2, y - rand() % maxSize / 2, x + rand() % maxSize / 2, y + rand() % maxSize / 2);
+        break;
+    case 1:
+        Ellipse(m_MemoryDC, x - rand() % maxSize / 2, y - rand() % maxSize / 2, x + rand() % maxSize / 2, y + rand() % maxSize / 2);
+        break;
+    case 2:
+        MakeStar(x, y, maxSize / 2);
+        break;
+    case 3:
+        MakeTriangle(x, y, maxSize / 3);
+        break;
+    case 4:
+        MakeHexagon(x, y, maxSize / 3);
+        break;
+    case 5:
+    case 6:
+    {
+        POINT vertexArray[12] = { NULL, };
+        int vertexNum = rand() % 12 + 1;
+        
+        for (int i = 0; i < vertexNum; ++i)
+        {
+            vertexArray[i] = { x + rand() % maxSize - maxSize / 2, y + rand() % maxSize - maxSize / 2 };
+        }
+        Polygon(m_MemoryDC, vertexArray, vertexNum);
+    }
+        break;
+    };
+    DeleteObject(myBrush);
+}
+
+void DrawManager::MakeTriangle(int x, int y, int maxSize)
+{
+    POINT vertexArray[3] = { NULL, };
+
+    vertexArray[0] = { x, y - maxSize };
+    vertexArray[1] = { x - maxSize, y + maxSize };
+    vertexArray[2] = { x + maxSize, y + maxSize };
+
+    Polygon(m_MemoryDC, vertexArray, 3);
+}
+
+void DrawManager::MakeHexagon(int x, int y, int maxSize)
+{
+    POINT vertexArray[6] = { NULL, };
+
+    vertexArray[0] = { x, y - maxSize };
+    vertexArray[1] = { x - maxSize * 5 / 6, y - maxSize / 2 };
+    vertexArray[2] = { x - maxSize * 5 / 6, y + maxSize / 2 };
+    vertexArray[3] = { x, y + maxSize };
+    vertexArray[4] = { x + maxSize * 5 / 6, y + maxSize / 2 };
+    vertexArray[5] = { x + maxSize * 5 / 6, y - maxSize / 2 };
+
+    Polygon(m_MemoryDC, vertexArray, 6);
+}
+
+void DrawManager::MakeStar(int x, int y, int maxSize)
+{
+    POINT vertexArray[5] = { NULL, };
+
+    vertexArray[0] = { x, y - maxSize };
+    vertexArray[1] = { x - maxSize * 2 / 3, y + maxSize };
+    vertexArray[2] = { x + maxSize, y - maxSize / 3 };
+    vertexArray[3] = { x - maxSize, y - maxSize / 3 };
+    vertexArray[4] = { x + maxSize * 2 / 3, y + maxSize };
+
+    Polygon(m_MemoryDC, vertexArray, 5);
+}
+
