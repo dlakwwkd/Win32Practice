@@ -1,5 +1,6 @@
 #include "FigureManager.h"
 #include "DrawManager.h"
+#include "KeyManager.h"
 
 #define INIT_FIGURE_NUM 100
 
@@ -23,11 +24,53 @@ Figure* FigureManager::MakeFigure(POINT pos, int size, Figure::Type m_Type)
     figure->m_Type = m_Type;
     figure->m_Center = pos;
     figure->m_Radius = size;
+    figure->m_Rotation = 0;
     figure->m_IsCollision = false;
     figure->m_Rect.left = pos.x - size;
     figure->m_Rect.top = pos.y - size;
     figure->m_Rect.right = pos.x + size;
     figure->m_Rect.bottom = pos.y + size;
+    m_FigureList.push_back(figure);
+    return figure;
+}
+
+Figure* FigureManager::MakeFigure(POINT pos, int size, int vertex, Figure::Type m_Type)
+{
+    if (vertex > Figure::MAX_VERTEX)
+        return nullptr;
+
+    Figure* figure = new Figure();
+    figure->m_Type = m_Type;
+    figure->m_Center = pos;
+    figure->m_Rotation = 0;
+    figure->m_IsCollision = false;
+    figure->m_VertexNum = vertex;
+
+    POINT point = { pos.x, pos.y - size };
+    for (int i = 0; i < vertex; ++i)
+    {
+        figure->m_VertexList[i] = point;
+        if (i < vertex / 4)
+        {
+            point.x += size;
+            point.y += size;
+        }
+        else if ( i < vertex / 2)
+        {
+            point.x -= size;
+            point.y += size;
+        }
+        else if (i < vertex / 2 + vertex / 4)
+        {
+            point.x -= size;
+            point.y -= size;
+        }
+        else
+        {
+            point.x += size;
+            point.y -= size;
+        }
+    }
     m_FigureList.push_back(figure);
     return figure;
 }
@@ -51,7 +94,12 @@ void FigureManager::DrawFigure()
             Rectangle(hdc, figure->m_Rect.left, figure->m_Rect.top, figure->m_Rect.right, figure->m_Rect.bottom);
             break;
         case Figure::CIRCLE:
+            MoveFigure(figure);
             Ellipse(hdc, figure->m_Rect.left, figure->m_Rect.top, figure->m_Rect.right, figure->m_Rect.bottom);
+            break;
+        case Figure::POLYGON:
+            DrawPolygon(figure);
+            Rotation(figure);
             break;
         }
         if (figure->m_IsCollision)
@@ -95,18 +143,19 @@ void FigureManager::CollisionCheck()
             if (IsCircleCollision(figure, m_MouseFigure))
                 continue;
         }
-        else
+        else if (figure->m_Type == Figure::BOX && m_MouseFigure->m_Type == Figure::CIRCLE)
         {
-            if (figure->m_Type == Figure::BOX)
-            {
-                if (IsRectCircleCollision(figure, m_MouseFigure))
-                    continue;
-            }
-            else
-            {
-                if (IsRectCircleCollision(m_MouseFigure, figure))
-                    continue;
-            }
+            if (IsRectCircleCollision(figure, m_MouseFigure))
+                continue;
+        }
+        else if (figure->m_Type == Figure::CIRCLE && m_MouseFigure->m_Type == Figure::BOX)
+        {
+            if (IsRectCircleCollision(m_MouseFigure, figure))
+                continue;
+        }
+        else if (figure->m_Type == Figure::POLYGON && m_MouseFigure->m_Type == Figure::POLYGON)
+        {
+
         }
         figure->m_IsCollision = false;
         m_MouseFigure->m_IsCollision = false;
@@ -163,4 +212,61 @@ bool FigureManager::IsRectCircleCollision(Figure* rect, Figure* circle)
             return true;
     }
     return false;
+}
+
+void FigureManager::Rotation(Figure* figure)
+{
+    figure->m_Rotation += 0.001;
+}
+
+void FigureManager::DrawPolygon(Figure* figure)
+{
+    HDC hdc = DrawManager::getInstance()->GetMemoryDC();
+    POINT temp[Figure::MAX_VERTEX] = { 0, };
+    LONG x = 0;
+    LONG y = 0;
+    int i = 0;
+    for (auto& vert : figure->m_VertexList)
+    {
+        x = vert.x - figure->m_Center.x;
+        y = vert.y - figure->m_Center.y;
+
+        auto tempX = x;
+        x = x * cos(figure->m_Rotation) - y * sin(figure->m_Rotation);
+        y = tempX * sin(figure->m_Rotation) + y * cos(figure->m_Rotation);
+
+        x += figure->m_Center.x;
+        y += figure->m_Center.y;
+
+        temp[i++] = { x, y };
+    }
+    Polygon(hdc, temp, figure->m_VertexNum);
+}
+
+void FigureManager::MoveFigure(Figure* figure)
+{
+    if (KeyManager::getInstance()->KeyCheck(VK_UP, HOLDKEY))
+    {
+        figure->m_Center.y -= 1;
+        figure->m_Rect.top -= 1;
+        figure->m_Rect.bottom -= 1;
+    }
+    if (KeyManager::getInstance()->KeyCheck(VK_DOWN, HOLDKEY))
+    {
+        figure->m_Center.y += 1;
+        figure->m_Rect.top += 1;
+        figure->m_Rect.bottom += 1;
+    }
+    if (KeyManager::getInstance()->KeyCheck(VK_LEFT, HOLDKEY))
+    {
+        figure->m_Center.x -= 1;
+        figure->m_Rect.left -= 1;
+        figure->m_Rect.right -= 1;
+    }
+    if (KeyManager::getInstance()->KeyCheck(VK_RIGHT, HOLDKEY))
+    {
+        figure->m_Center.x += 1;
+        figure->m_Rect.left += 1;
+        figure->m_Rect.right += 1;
+    }
 }

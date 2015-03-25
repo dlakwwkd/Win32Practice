@@ -2,6 +2,7 @@
 #include <time.h>
 #include <math.h>
 #include <vector>
+#include "KeyManager.h"
 #include "DrawManager.h"
 #include "FigureManager.h"
 #include "Figure.h"
@@ -106,7 +107,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
         
     case WM_LBUTTONDOWN:
-        FigureManager::getInstance()->MakeFigure({ mouseX, mouseY }, 50, Figure::BOX);
+        FigureManager::getInstance()->MakeFigure({ mouseX, mouseY }, 50, 4, Figure::POLYGON);
         break;
     case WM_RBUTTONDOWN:
         FigureManager::getInstance()->MakeFigure({ mouseX, mouseY }, 50, Figure::CIRCLE);
@@ -122,8 +123,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 void Rendering(HWND hWnd)
 {
+    KeyManager::getInstance()->KeyInput();
     DrawManager::getInstance()->InitScreen(hWnd);
     HDC	hdc = DrawManager::getInstance()->GetMemoryDC();
+
+    static int frame = 0;
+    static int prevTime = GetTickCount();
+    frame++;
+    int curTime = GetTickCount();
+    if (curTime - prevTime > 1000)
+    {
+        WCHAR buf[256] = { 0, };
+        wsprintf(buf, L" frame = %d", frame);
+        DrawManager::getInstance()->StartRecord();
+        TextOut(hdc, 0, 49, buf, wcslen(buf));
+        DrawManager::getInstance()->CloseRecord();
+        prevTime = curTime;
+        frame = 0;
+    }
 
     float x1 = 200;
     float x2 = 700;

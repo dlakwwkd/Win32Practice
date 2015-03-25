@@ -13,9 +13,13 @@ public:
     }
 
     Figure* MakeFigure(POINT pos, int size, Figure::Type type);
+    Figure* MakeFigure(POINT pos, int size, int vertex, Figure::Type type);
     void    DrawFigure();
     void    UpdateMouseFigure(POINT pos);
     void    CollisionCheck();
+    void    Rotation(Figure* figure);
+    void    DrawPolygon(Figure* figure);
+    void    MoveFigure(Figure* figure);
 
 private:
     bool    IsRectCollision(Figure* figureA, Figure* figureB);
